@@ -8,6 +8,14 @@
 <!-- Favicon -->
 <link rel="icon" href="https://raw.githubusercontent.com/fwswidget/QuadoWeb/refs/heads/main/quadoicon-removebg-preview.png" type="image/png">
 
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script>
+(function(){
+    emailjs.init("2gW9WAbpix-xAqfoq");
+})();
+</script>
+
 <style>
     :root {
         --bg: rgb(20,20,20);
@@ -22,7 +30,6 @@
     * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
     body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; }
 
-    /* Sidebar */
     .sidebar {
         width: 220px;
         background: var(--panel);
@@ -49,12 +56,7 @@
     }
     .sidebar a:hover { background: #1c1c1c; color: var(--text); }
 
-    /* Main content */
-    .main {
-        flex: 1;
-        padding: 30px;
-        overflow-y: auto;
-    }
+    .main { flex: 1; padding: 30px; overflow-y: auto; }
 
     .section {
         background: var(--panel);
@@ -98,14 +100,19 @@
 
     <div id="help" class="section">
         <h2>Help & Support</h2>
-        <p>If you need assistance, contact support via our Discord:</p>
         <button onclick="window.open('https://discord.gg/rnDKPcz9M9','_blank')">Join Our Discord</button>
     </div>
 
     <div id="redeem" class="section">
         <h2>Redeem Key</h2>
+
+        <input id="emailInput" placeholder="Enter your email">
         <input id="keyInput" placeholder="Enter your Quado key">
-        <button onclick="redeemKey()">Redeem</button>
+        <button onclick="sendCode()">Send Verification Code</button>
+
+        <input id="codeInput" placeholder="Enter verification code" style="display:none;">
+        <button id="verifyBtn" onclick="verifyCode()" style="display:none;">Verify & Download</button>
+
         <div id="status" class="status"></div>
     </div>
 
@@ -113,7 +120,6 @@
 </div>
 
 <script>
-    // 🔑 EDIT YOUR KEYS HERE
     const validKeys = [
         "dwajngdsao-gdsajgdsakx",
         "zmxcbgkgda-asafngdslqb",
@@ -122,17 +128,65 @@
         "pqrowteiuq-mczxpwqiksf"
     ];
 
-    function redeemKey() {
-        const input = document.getElementById("keyInput").value.trim();
+    let verificationCode = "";
+    let activeKey = "";
+
+    function sendCode() {
+        const email = document.getElementById("emailInput").value.trim();
+        const key = document.getElementById("keyInput").value.trim();
         const status = document.getElementById("status");
 
-        if (validKeys.includes(input)) {
+        if (!email || !key) {
+            status.textContent = "Enter email and key.";
+            return;
+        }
+
+        if (!validKeys.includes(key)) {
+            status.textContent = "Invalid key.";
+            return;
+        }
+
+        verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        activeKey = key;
+
+emailjs.send(
+    "service_asd6k7q",
+    "template_nh4vu3k",
+    {
+        to_email: email,               // matches template {{to_email}}
+        verification_code: verificationCode  // matches template {{verification_code}}
+    }
+)
+.then(() => {
+    status.style.color = "#4aaf82";
+    status.textContent = "Verification code sent.";
+    document.getElementById("codeInput").style.display = "block";
+    document.getElementById("verifyBtn").style.display = "block";
+})
+.catch((error) => {
+    console.error("EMAILJS ERROR:", error);
+    status.style.color = "#ff6d6d";
+    status.textContent = "Failed to send email.";
+});
+
+
+        status.textContent = "Verification code sent.";
+        document.getElementById("codeInput").style.display = "block";
+        document.getElementById("verifyBtn").style.display = "block";
+    }
+
+    function verifyCode() {
+        const input = document.getElementById("codeInput").value.trim();
+        const status = document.getElementById("status");
+
+        if (input === verificationCode) {
             status.style.color = "#4aaf82";
-            status.textContent = "Key accepted. Redirecting...";
-            window.location.href = "https://raw.githubusercontent.com/fwswidget/QuadoWeb/refs/heads/main/QuadoInjector.exe";
+            status.textContent = "Verified. Downloading...";
+            window.location.href =
+                "https://raw.githubusercontent.com/fwswidget/QuadoWeb/refs/heads/main/QuadoInjector.exe";
         } else {
             status.style.color = "#ff6d6d";
-            status.textContent = "Invalid key.";
+            status.textContent = "Invalid verification code.";
         }
     }
 </script>
